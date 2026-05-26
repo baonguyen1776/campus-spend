@@ -1,0 +1,6 @@
+{
+  "name": "Personal Finance Tracker",
+  "description": "An elegant, interactive personal finance app with expense tracking, visualization reports, saving goals budget planner, and full operations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

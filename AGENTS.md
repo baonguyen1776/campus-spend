@@ -414,6 +414,7 @@ When generating code:
 8. Prefer readable code over clever code.
 9. Follow TypeScript types consistently.
 10. Preserve the MVP scope.
+11. Strictly follow the OOP & SOLID Design Principles (Senior Developer Standard) defined in [GUIDELINES.md](file:///Users/nguyenphuonggiabao/Documents/Project%20file/campus-spend/GUIDELINES.md) to ensure code is modular, robust, clean, and maintainable.
 
 Recommended order:
 
@@ -505,5 +506,6 @@ This project should be built with computational thinking:
 2. **Pattern recognition:** Most reports follow filter → group → sum → compare.
 3. **Abstraction:** Model real-life money events as typed entities.
 4. **Algorithm design:** Create clear rules for balance, jar remaining, overspending, and transfers.
+5. **Object-Oriented Design & SOLID Principles:** Build rich domain models and abstract database layers to ensure modularity, high testability, and seamless future expansion (e.g., SQLite to Supabase/Firestore transition).
 
 The goal is not to build many features quickly. The goal is to build a small, correct, understandable system.
