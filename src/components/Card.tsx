@@ -2,13 +2,14 @@ import React from 'react';
 import { View, StyleSheet, ViewProps } from 'react-native';
 import Theme from '../constants/theme';
 
-// 1. ĐỊNH NGHĨA ENUM CHO BIẾN THỂ CARD (CHUẨN OOP TĨNH)
-// Đóng gói các nhãn biến thể, tránh lỗi gõ sai chuỗi (Magic Strings)
-export enum CardVariant {
-    DEFAULT = 'default',
-    ELEVATED = 'elevated',
-    OUTLINED = 'outlined',
-}
+// 1. ĐỊNH NGHĨA BIẾN THỂ CARD (Dạng Const Object an toàn với Metro Bundler)
+export const CardVariant = {
+    DEFAULT: 'default',
+    ELEVATED: 'elevated',
+    OUTLINED: 'outlined',
+} as const;
+
+export type CardVariant = typeof CardVariant[keyof typeof CardVariant];
 
 // 2. ĐỊNH NGHĨA THAM SỐ ĐẦU VÀO (PROPS INTERFACE)
 interface CardProps extends ViewProps {

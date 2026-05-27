@@ -18,7 +18,7 @@ The project should not implement backend, login, cloud sync, or AI yet.
    - `docs/current-tasks.md`
 3. Set up Expo app with TypeScript.
 4. Confirm the app runs with Expo Go.
-5. Create initial folder structure:
+5. Create initial folder structure: (Completed)
    - `src/components`
    - `src/types`
    - `src/database`
@@ -29,29 +29,29 @@ The project should not implement backend, login, cloud sync, or AI yet.
    - `src/features/reports`
    - `src/services`
    - `src/utils`
-6. Build static Home Dashboard UI.
-7. Build static Add Transaction screen.
-8. Define TypeScript types:
+6. Build static Home Dashboard UI. (Completed - Refactored to OOP SOLID Clean Architecture)
+7. Build static Add Transaction screen. (Completed - Refactored to OOP SOLID Clean Architecture & Colocated in components subfolder)
+8. Define TypeScript types: (Completed - Implemented Rich Domain classes Transaction & Jar, Interface mappings for IAccount, ICategory, IJar, ITransaction)
    - `Transaction`
    - `Category`
    - `Account`
    - `Jar`
    - `JarTransfer`
-9. Use mock data first.
-10. Add SQLite only after the basic UI and types are clear.
+9. Use mock data first. (Completed - Implemented MockTransactionRepository)
+10. Add SQLite only after the basic UI and types are clear. (Completed - Fully integrated SQLite with repositories and seeding)
 
 ---
 
 ## MVP Phase 1 Checklist
 
-- [ ] Add income transaction.
-- [ ] Add expense transaction.
-- [ ] View transaction list.
+- [x] Add income transaction.
+- [x] Add expense transaction.
+- [x] View transaction list.
 - [ ] Edit transaction.
 - [ ] Delete transaction.
-- [ ] View monthly total income.
-- [ ] View monthly total expense.
-- [ ] View monthly balance.
+- [x] View monthly total income.
+- [x] View monthly total expense.
+- [x] View monthly balance.
 - [ ] Filter transactions by month.
 - [ ] Filter transactions by category.
 

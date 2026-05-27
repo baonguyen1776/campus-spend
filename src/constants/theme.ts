@@ -1,37 +1,37 @@
 export const Colors = {
     // --- Brand ---
-    primary: '#00D09E',       // Mint green — main accent (income, CTA, active states)
-    primaryLight: '#33DBAF',  // Lighter mint for hover/pressed
-    primaryDim: '#00D09E26',  // Mint with opacity — chip backgrounds, tags
+    primary: '#00D09E',       // Mint green — main accent
+    primaryLight: '#33DBAF',  // Lighter mint
+    primaryDim: '#00D09E1A',  // Translucent mint
 
-    secondary: '#F5A623',     // Amber — savings jars, warnings
-    secondaryDim: '#F5A62326',
+    secondary: '#F5A623',     // Amber
+    secondaryDim: '#F5A6231A',
 
-    danger: '#FF5C5C',        // Red — expense, negative balance
-    dangerDim: '#FF5C5C26',
+    danger: '#FF5C5C',        // Red
+    dangerDim: '#FF5C5C1A',
 
-    info: '#5B9BF8',          // Blue — transfers, info states
-    infoDim: '#5B9BF826',
+    info: '#5B9BF8',          // Blue
+    infoDim: '#5B9BF81A',
 
     // --- Backgrounds ---
-    bgBase: '#121824',        // Rich navy slate — brightened from #0D1117 for a more premium look
-    bgSurface: '#1B2333',     // Card background — brightened from #161B25
-    bgElevated: '#242F44',    // Modal surface — brightened from #1E2636
-    bgInput: '#20293D',       // Input background — brightened from #1A2030
-    bgOverlay: 'rgba(0,0,0,0.6)', // Overlay scrim
+    bgBase: '#F8FAFC',        // Slate 50 — Clean premium light background
+    bgSurface: '#FFFFFF',     // Pure white card background
+    bgElevated: '#FFFFFF',    // Elevated card surface
+    bgInput: '#F1F5F9',       // Slate 100 — Input fields background
+    bgOverlay: 'rgba(15, 23, 42, 0.4)', // Darker scrim overlay
 
     // --- Text ---
-    textPrimary: '#F0F4FF',   // Near-white — headings, amounts
-    textSecondary: '#8C95A8', // Muted — labels, subtext
-    textDisabled: '#444D60',  // Disabled / placeholder
-    textInverse: '#0D1117',   // Text on primary (mint) backgrounds
+    textPrimary: '#0F172A',   // Slate 900 — Near-black headings/amounts for high contrast
+    textSecondary: '#64748B', // Slate 500 — Muted gray labels/subtext
+    textDisabled: '#94A3B8',  // Slate 400 — Disabled state / placeholder
+    textInverse: '#FFFFFF',   // White text on primary (mint)
 
     // --- Borders & Dividers ---
-    border: '#242E42',        // Default border / divider
+    border: '#E2E8F0',        // Slate 200 — Clean elegant border
     borderFocus: '#00D09E',   // Focused input border
 
     // --- Semantic aliases (for components) ---
-    income: '#00D09E',
+    income: '#00C896',
     expense: '#FF5C5C',
     transfer: '#5B9BF8',
     saving: '#F5A623',
@@ -45,12 +45,12 @@ export const Colors = {
 export type ColorKey = keyof typeof Colors;
 
 export const FontFamily = {
-    regular: 'Inter-Regular',       // Chuyển sang Inter
+    regular: 'Inter-Regular',       // Inter
     medium: 'Inter-Medium',
     semiBold: 'Inter-SemiBold',
     bold: 'Inter-Bold',
-    mono: 'JetBrainsMono-Regular',  // Chuyển số tiền sang JetBrains Mono thẳng hàng
-    display: 'SpaceGrotesk-Bold',   // Font Space Grotesk cực ngầu cho số dư lớn
+    mono: 'JetBrainsMono-Regular',  // JetBrains Mono for numbers alignment
+    display: 'SpaceGrotesk-Bold',   // Space Grotesk for big balance display
 } as const;
 
 
@@ -111,21 +111,21 @@ export const Shadow = {
         elevation: 0,
     },
     sm: {
-        shadowColor: '#000',
+        shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 3,
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 2,
     },
     md: {
-        shadowColor: '#000',
+        shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.35,
         shadowRadius: 8,
         elevation: 6,
     },
     lg: {
-        shadowColor: '#000',
+        shadowColor: '#0F172A',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.45,
         shadowRadius: 16,
@@ -135,9 +135,9 @@ export const Shadow = {
         // Mint glow for primary buttons / active elements
         shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
+        shadowOpacity: 0.25,
         shadowRadius: 12,
-        elevation: 8,
+        elevation: 6,
     },
 } as const;
 
@@ -161,6 +161,8 @@ export const Layout = {
     avatarSm: 32,
     avatarMd: 44,
     avatarLg: 64,
+    fabSize: 56,                    // Floating Action Button standard size
+    togglePillMaxWidth: 140,        // Max width for floating pill toggle buttons
 } as const;
 
 export const Duration = {

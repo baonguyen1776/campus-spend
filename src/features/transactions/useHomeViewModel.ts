@@ -1,35 +1,66 @@
 import { useState, useEffect, useMemo } from "react";
-import { MockTransactionRepository } from "../../database/repositories/MockTransactionRepository";
-import { TransactionService } from "../../services/TransactionService";
 import { Transaction } from "../../domain/entities/Transaction";
 import { MOCK_ACCOUNTS } from "../../constants/mockData";
+import { generateRecentMonths } from "../../utils/format";
+import { transactionService } from "../../services/TransactionService";
 
-// Singletons initialized for local in-memory persistence
-const transactionRepository = new MockTransactionRepository();
-const transactionService = new TransactionService(transactionRepository);
-
-const MONTHS = ["Tháng 3, 2026", "Tháng 4, 2026", "Tháng 5, 2026", "Tháng 6, 2026"];
+const MONTHS = generateRecentMonths(4);
 
 export function useHomeViewModel() {
-    const [selectedMonth, setSelectedMonth] = useState(MONTHS[2]);
+    const [selectedMonth, setSelectedMonth] = useState(MONTHS[MONTHS.length - 1]);
     const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        let isMounted = true;
+    const loadTransactions = () => {
         transactionService.getTransactions().then(data => {
-            if (isMounted) {
-                setTransactions(data);
-                setLoading(false);
-            }
+            setTransactions(data);
+            setLoading(false);
         });
-        return () => {
-            isMounted = false;
-        };
+    };
+
+    useEffect(() => {
+        loadTransactions();
     }, []);
 
+    // Điều phối hành động Lưu giao dịch
+    const handleSaveTransaction = async (data: {
+        name: string;
+        amount: number;
+        type: "income" | "expense";
+        category_id: string | null;
+        account_id: string;
+        jar_id: string | null;
+        note: string | null;
+        transaction_date: Date;
+    }) => {
+        try {
+            // Khởi tạo đối tượng Domain Model Rich Entity (Encapsulated Invariant Rules)
+            const newTx = new Transaction({
+                id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+                name: data.name,
+                amount: data.amount,
+                type: data.type,
+                category_id: data.category_id || "",
+                account_id: data.account_id,
+                jar_id: data.jar_id,
+                note: data.note,
+                transaction_date: data.transaction_date,
+            });
+
+            // Thực hiện ghi nhận giao dịch thông qua tầng Service
+            await transactionService.saveTransaction(newTx);
+
+            // Cập nhật lại danh sách trên Dashboard tức thì!
+            loadTransactions();
+        } catch (error: any) {
+            console.error("Error saving transaction:", error.message);
+        }
+    };
+
     const recentTransactions = useMemo(() => {
+        // Lấy 4 giao dịch gần đây nhất để hiển thị ở trang chủ
         return transactions.slice(0, 4);
     }, [transactions]);
 
@@ -46,7 +77,8 @@ export function useHomeViewModel() {
     }, [transactions]);
 
     const balance = useMemo(() => {
-        return 12450000 + incomeSum - expenseSum;
+        // Số dư hiện tại = Tổng thu nhập - Tổng chi tiêu (Theo nguyên tắc nghiệp vụ trong AGENTS.md)
+        return incomeSum - expenseSum;
     }, [incomeSum, expenseSum]);
 
     const groupedByDay = useMemo(() => {
@@ -68,6 +100,9 @@ export function useHomeViewModel() {
         setSelectedMonth,
         showMonthDropdown,
         setShowMonthDropdown,
+        showAddModal,
+        setShowAddModal,
+        handleSaveTransaction,
         balance,
         incomeSum,
         expenseSum,

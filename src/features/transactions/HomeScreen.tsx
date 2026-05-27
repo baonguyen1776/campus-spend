@@ -1,21 +1,21 @@
 import React from "react";
 import {
     View,
-    StyleSheet,
-    TouchableOpacity,
     ScrollView,
     Image,
+    TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 
 import Theme from "../../constants/theme";
 import AppText from "../../components/AppText";
-import Card, { CardVariant } from "../../components/Card";
+import Card from "../../components/Card";
 import { formatVND, formatTime } from "../../utils/format";
 import { getCategoryConfig } from "../../constants/categoryConfig";
 
 import { useHomeViewModel } from "./useHomeViewModel";
+import styles from "./HomeScreen.styles";
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
@@ -33,7 +33,6 @@ export default function HomeScreen() {
         MONTHS,
         loading
     } = useHomeViewModel();
-
 
     return (
         <ScrollView
@@ -121,7 +120,6 @@ export default function HomeScreen() {
             </LinearGradient>
 
             <View style={styles.body}>
-
                 {/* ── Hàng 2 thẻ: Thu nhập / Chi tiêu ── */}
                 <View style={styles.summaryRow}>
                     {/* Thẻ Thu nhập */}
@@ -136,7 +134,7 @@ export default function HomeScreen() {
                             </AppText>
                         </View>
                         <AppText style={styles.summaryAmount} color={Theme.colors.textPrimary}>
-                            {formatVND(incomeSum || 4_500_000)}
+                            {formatVND(incomeSum)}
                         </AppText>
                     </Card>
 
@@ -152,22 +150,22 @@ export default function HomeScreen() {
                             </AppText>
                         </View>
                         <AppText style={styles.summaryAmount} color={Theme.colors.textPrimary}>
-                            {formatVND(expenseSum || 1_200_000)}
+                            {formatVND(expenseSum)}
                         </AppText>
                     </Card>
                 </View>
 
-                <Card style={styles.darkBanner} variant={CardVariant.ELEVATED}>
+                <Card style={styles.darkBanner}>
                     <View style={styles.darkBannerIconBox}>
-                        <Feather name="zap" size={16} color="#A769FF" />
+                        <Feather name="alert-triangle" size={16} color={Theme.colors.secondary} />
                     </View>
                     <View style={{ flex: 1 }}>
-                        <AppText size="xs" variant="semiBold" color="#E4E4E7">
+                        <AppText size="xs" variant="semiBold" color={Theme.colors.textPrimary}>
                             Cảnh báo vượt hạn mức!
                         </AppText>
                     </View>
                     <TouchableOpacity>
-                        <AppText size="xs" variant="bold" color="#A769FF">
+                        <AppText size="xs" variant="bold" color={Theme.colors.secondary}>
                             Xem chi tiết ›
                         </AppText>
                     </TouchableOpacity>
@@ -287,283 +285,13 @@ export default function HomeScreen() {
                             >
                                 Chưa có giao dịch nào.
                             </AppText>
-                            <TouchableOpacity style={{ marginTop: 8 }}>
-                                <AppText size="xs" variant="bold" color={Theme.colors.primary}>
-                                    Tạo giao dịch đầu tiên
-                                </AppText>
-                            </TouchableOpacity>
+                            <AppText size="xs" variant="bold" color={Theme.colors.primary} style={{ marginTop: 8 }}>
+                                Nhấn nút + ở dưới để thêm giao dịch
+                            </AppText>
                         </View>
                     )}
                 </View>
-
             </View>
         </ScrollView>
     );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Theme.colors.bgBase,
-    },
-    contentContainer: {
-        paddingBottom: Theme.layout.bottomTabHeight + 16,
-    },
-
-    // ── Header ──────────────────────────────────────────────────────────────
-    headerGradient: {
-        paddingTop: 52,
-        paddingBottom: 72,          // Thêm padding dưới nhiều để body overlap lên
-        paddingHorizontal: 20,
-    },
-    topRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 24,
-    },
-    avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.4)',
-    },
-    monthSelector: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 14,
-        paddingVertical: 7,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        borderRadius: Theme.radius.full,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
-    },
-    notificationButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
-    },
-    notificationDot: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#FF5C5C',
-        borderWidth: 1.5,
-        borderColor: '#007A5E',
-    },
-    monthDropdown: {
-        position: 'absolute',
-        top: 100,
-        left: '50%',
-        transform: [{ translateX: -65 }],
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        paddingVertical: 6,
-        minWidth: 160,
-        ...Theme.shadow.md,
-        zIndex: 999,
-    },
-    monthDropdownItem: {
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-    },
-    monthDropdownItemActive: {
-        backgroundColor: '#F0FFF8',
-    },
-
-    // ── Balance ─────────────────────────────────────────────────────────────
-    balanceSection: {
-        alignItems: 'center',
-    },
-    balanceAmount: {
-        fontFamily: Theme.font.family.display,
-        fontSize: 34,
-        color: Theme.colors.white,
-        marginTop: 4,
-        letterSpacing: -0.5,
-    },
-    balanceBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 5,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        borderRadius: Theme.radius.full,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
-    },
-
-    // ── Body (nổi đè lên header) ─────────────────────────────────────────────
-    body: {
-        flex: 1,
-        backgroundColor: Theme.colors.bgBase,
-        borderTopLeftRadius: 32,
-        borderTopRightRadius: 32,
-        marginTop: -40,             // Overlap effect — giống reference "-mt-10"
-        paddingHorizontal: 20,
-        paddingTop: 24,
-        ...Theme.shadow.lg,
-    },
-
-    // ── Thẻ Thu nhập / Chi tiêu ──────────────────────────────────────────────
-    summaryRow: {
-        flexDirection: 'row',
-        gap: 16,
-        marginBottom: 20,
-    },
-    summaryCardDecor: {
-        position: 'absolute',
-        top: -10,
-        right: -10,
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: 'rgba(0,208,158,0.05)',
-    },
-    summaryCardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 12,
-    },
-    summaryIconBox: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-    },
-    summaryEmoji: {
-        fontSize: 13,
-    },
-    summaryAmount: {
-        fontFamily: Theme.font.family.bold,
-        fontSize: 17,
-        letterSpacing: -0.3,
-    },
-
-    // ── Dark Banner (Warning / AI Insight) ──────────────────────────────────
-    darkBanner: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        backgroundColor: '#121214',
-        borderRadius: 20,
-        paddingVertical: 14,
-        paddingHorizontal: 16,
-        marginBottom: 24,
-        borderWidth: 1,
-        borderColor: '#2A2A2E',
-        ...Theme.shadow.md,
-    },
-    darkBannerIconBox: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: 'rgba(167,105,255,0.12)',
-        borderWidth: 1,
-        borderColor: 'rgba(167,105,255,0.2)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-
-    // ── Transactions Section ─────────────────────────────────────────────────
-    transactionsSection: {},
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    sectionHeaderActions: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    iconButton: {
-        padding: 8,
-        borderRadius: 10,
-        backgroundColor: Theme.colors.bgSurface,
-    },
-    periodButton: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        backgroundColor: Theme.colors.primaryDim,
-        borderRadius: Theme.radius.full,
-    },
-
-    // ── Date Group Header ────────────────────────────────────────────────────
-    dateGroupHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 10,
-        paddingHorizontal: 2,
-    },
-
-    // ── Transaction List & Items ─────────────────────────────────────────────
-    txList: {
-        gap: 10,
-        marginBottom: 16,
-    },
-    txItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 14,
-        backgroundColor: Theme.colors.bgSurface,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: Theme.colors.border,
-        gap: 12,
-    },
-    txIconBox: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-    },
-    txMeta: {
-        flex: 1,
-    },
-    txSubRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 5,
-        gap: 4,
-    },
-    txDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-    },
-    txAmountCol: {
-        alignItems: 'flex-end',
-    },
-
-    // ── Empty State ──────────────────────────────────────────────────────────
-    emptyState: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 40,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderStyle: 'dashed',
-        borderColor: Theme.colors.border,
-        marginTop: 8,
-    },
-});
