@@ -30,6 +30,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<TabType>('home');
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0); // Trigger reload danh sách khi có giao dịch mới
+  const [editingData, setEditingData] = useState<Transaction | null>(null);
 
   const [fontsLoaded] = useFonts({
     'Inter-Regular': Inter_400Regular,
@@ -56,20 +57,35 @@ export default function App() {
     transaction_date: Date;
   }) => {
     try {
-      const newTx = new Transaction({
-        id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
-        name: data.name,
-        amount: data.amount,
-        type: data.type,
-        category_id: data.category_id || "",
-        account_id: data.account_id,
-        jar_id: data.jar_id,
-        note: data.note,
-        transaction_date: data.transaction_date,
-      });
+      if (editingData) {
+        editingData.updateTransaction({
+          name: data.name,
+          amount: data.amount,
+          type: data.type,
+          category_id: data.category_id,
+          account_id: data.account_id,
+          jar_id: data.jar_id,
+          note: data.note,
+          transaction_date: data.transaction_date,
+        });
 
-      // Lưu giao dịch qua Service Singleton
-      await transactionService.saveTransaction(newTx);
+        await transactionService.saveTransaction(editingData);
+      } else {
+        const newTx = new Transaction({
+          id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+          name: data.name,
+          amount: data.amount,
+          type: data.type,
+          category_id: data.category_id || "",
+          account_id: data.account_id,
+          jar_id: data.jar_id,
+          note: data.note,
+          transaction_date: data.transaction_date,
+        });
+
+        // Lưu giao dịch qua Service Singleton
+        await transactionService.saveTransaction(newTx);
+      }
 
       // Tăng refreshKey để kích hoạt re-mount màn hình HomeScreen đồng bộ tức thì
       setRefreshKey(prev => prev + 1);
@@ -80,7 +96,13 @@ export default function App() {
 
   // Registry Map kết hợp refreshKey động để làm mới màn hình HomeScreen
   const screensRegistry: Record<TabType, React.ReactNode> = {
-    home: <HomeScreen key={refreshKey} />,
+    home: <HomeScreen
+      key={refreshKey}
+      onEditTransaction={(tx) => {
+        setEditingData(tx);
+        setShowAddTransaction(true);
+      }}
+    />,
     plan: <PlanScreen />,
     report: <ReportScreen />,
     settings: <SettingsScreen />,
@@ -143,7 +165,11 @@ export default function App() {
       {/* 3. MODAL NHẬP GIAO DỊCH MỚI TRUNG TÂM */}
       <AddTransactionScreen
         visible={showAddTransaction}
-        onClose={() => setShowAddTransaction(false)}
+        editingData={editingData}
+        onClose={() => {
+          setShowAddTransaction(false);
+          setEditingData(null);
+        }}
         onSave={handleSaveTransaction}
       />
     </SafeAreaView>

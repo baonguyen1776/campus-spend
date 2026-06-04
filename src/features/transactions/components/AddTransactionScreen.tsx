@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     TouchableOpacity,
@@ -10,13 +10,15 @@ import {
 import { Feather } from "@expo/vector-icons";
 import Theme from "../../../constants/theme";
 import AppText from "../../../components/AppText";
-import { MOCK_CATEGORIES, MOCK_ACCOUNTS, MOCK_JARS } from "../../../constants/mockData";
+import { SQLiteDatabaseManager } from "../../../database/SQLiteDatabaseManager";
 import { formatVND } from "../../../utils/format";
 import styles from "./AddTransactionScreen.styles";
+import { Transaction } from "../../../domain/entities/Transaction";
 
 interface AddTransactionScreenProps {
     visible: boolean;
     onClose: () => void;
+    editingData?: Transaction | null;
     onSave: (data: {
         name: string;
         amount: number;
@@ -29,19 +31,142 @@ interface AddTransactionScreenProps {
     }) => void;
 }
 
-export default function AddTransactionScreen({ visible, onClose, onSave }: AddTransactionScreenProps) {
+export default function AddTransactionScreen({
+    visible,
+    onClose,
+    onSave,
+    editingData
+}: AddTransactionScreenProps) {
     const [amount, setAmount] = useState("");
     const [name, setName] = useState("");
     const [type, setType] = useState<"income" | "expense">("expense");
+
+    const [categoriesList, setCategoriesList] = useState<{ id: string; name: string; type: string }[]>([]);
+    const [accountsList, setAccountsList] = useState<{ id: string; name: string; type: string }[]>([]);
+    const [jarsList, setJarsList] = useState<{ id: string; name: string; current_amount: number }[]>([]);
+
     const [categoryId, setCategoryId] = useState<string | null>(null);
-    const [accountId, setAccountId] = useState<string>(MOCK_ACCOUNTS[0]?.id || "");
+    const [accountId, setAccountId] = useState<string>("");
     const [jarId, setJarId] = useState<string | null>(null);
     const [note, setNote] = useState("");
-    const [dateOption, setDateOption] = useState<"today" | "yesterday">("today");
+    const [dateOption, setDateOption] = useState<"today" | "yesterday" | "other">("today");
 
+    const [newCategoryName, setNewCategoryName] = useState("");
     const [activePicker, setActivePicker] = useState<"category" | "account" | "jar" | "date" | "note_sheet" | null>(null);
 
-    const categories = MOCK_CATEGORIES.filter(c => c.type === type);
+    const dbManager = SQLiteDatabaseManager.getInstance();
+
+    const loadSQLiteData = async () => {
+        try {
+            const db = await dbManager.getDatabase();
+
+            const cats = await db.getAllAsync<{ id: string; name: string; type: string }>(
+                "SELECT * FROM categories;"
+            );
+            setCategoriesList(cats);
+
+            const accs = await db.getAllAsync<{ id: string; name: string; type: string }>(
+                "SELECT * FROM accounts;"
+            );
+            setAccountsList(accs);
+
+            const jrs = await db.getAllAsync<{ id: string; name: string; current_amount: number }>(
+                "SELECT * FROM jars;"
+            );
+            setJarsList(jrs);
+
+            if (accs.length > 0 && !accountId) {
+                setAccountId(accs[0].id);
+            }
+        } catch (error) {
+            console.error("[AddTransactionScreen] Error loading SQLite data:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (visible) {
+            loadSQLiteData();
+
+            if (editingData) {
+                setAmount(editingData.amount.toString());
+                setName(editingData.name);
+                setType(editingData.type);
+                setCategoryId(editingData.category_id);
+                setAccountId(editingData.account_id);
+                setJarId(editingData.jar_id);
+                setNote(editingData.note || "");
+
+                const today = new Date();
+                const txDate = editingData.transaction_date;
+
+                const isSameDate = txDate.getDate() === today.getDate() &&
+                    txDate.getMonth() === today.getMonth() &&
+                    txDate.getFullYear() === today.getFullYear();
+
+                const isYesterday = txDate.getDate() === today.getDate() - 1 &&
+                    txDate.getMonth() === today.getMonth() &&
+                    txDate.getFullYear() === today.getFullYear();
+
+                if (isSameDate) {
+                    setDateOption("today");
+                } else if (isYesterday) {
+                    setDateOption("yesterday");
+                } else {
+                    setDateOption("other");
+                }
+            } else {
+                setAmount("");
+                setName("");
+                setType("expense");
+                setCategoryId(null);
+                setAccountId("");
+                setJarId(null);
+                setNote("");
+                setDateOption("today");
+            }
+        }
+    }, [visible, editingData]);
+
+    const categories = categoriesList.filter(c => c.type === type);
+
+    const handleCreateCategory = async () => {
+        const trimmedName = newCategoryName.trim();
+        if (!trimmedName) {
+            Alert.alert("Lỗi", "Vui lòng nhập tên danh mục!");
+            return;
+        }
+
+        const isDuplicate = categories.some(
+            c => c.name.toLowerCase() === trimmedName.toLowerCase()
+        );
+        if (isDuplicate) {
+            Alert.alert("Lỗi", "Danh mục này đã tồn tại!");
+            return;
+        }
+
+        try {
+            const db = await dbManager.getDatabase();
+            const newId = `cat_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+            const nowStr = new Date().toISOString();
+
+            await db.runAsync(
+                "INSERT INTO categories (id, name, type, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+                [newId, trimmedName, type, nowStr, nowStr]
+            );
+
+            const cats = await db.getAllAsync<{ id: string; name: string; type: string }>(
+                "SELECT * FROM categories;"
+            );
+            setCategoriesList(cats);
+
+            setCategoryId(newId);
+            setNewCategoryName("");
+            Alert.alert("Thành công", `Đã tạo danh mục "${trimmedName}"!`);
+        } catch (error) {
+            console.error("[AddTransactionScreen] Error creating category:", error);
+            Alert.alert("Lỗi", "Không thể lưu danh mục vào cơ sở dữ liệu.");
+        }
+    };
 
     const handleSubmit = () => {
         const numericAmount = parseFloat(amount);
@@ -55,14 +180,24 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
             return;
         }
 
+        if (type === "expense" && !categoryId) {
+            Alert.alert("Lỗi", "Vui lòng chọn danh mục chi tiêu!");
+            return;
+        }
+
         if (!accountId) {
             Alert.alert("Lỗi", "Vui lòng chọn tài khoản thanh toán!");
             return;
         }
 
-        const transactionDate = new Date();
-        if (dateOption === "yesterday") {
-            transactionDate.setDate(transactionDate.getDate() - 1);
+        let transactionDate = editingData ? new Date(editingData.transaction_date) : new Date()
+
+        if (dateOption === "today") {
+            transactionDate = new Date()
+        } else if (dateOption === "yesterday") {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            transactionDate = yesterday;
         }
 
         onSave({
@@ -80,7 +215,6 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
         setName("");
         setType("expense");
         setCategoryId(null);
-        setAccountId(MOCK_ACCOUNTS[0]?.id || "");
         setJarId(null);
         setNote("");
         setDateOption("today");
@@ -89,20 +223,26 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
 
     const getCategoryName = () => {
         if (!categoryId) return "Chọn danh mục";
-        return MOCK_CATEGORIES.find(c => c.id === categoryId)?.name || "Chọn danh mục";
+        return categoriesList.find(c => c.id === categoryId)?.name || "Chọn danh mục";
     };
 
     const getAccountName = () => {
-        return MOCK_ACCOUNTS.find(a => a.id === accountId)?.name || "Chọn tài khoản";
+        return accountsList.find(a => a.id === accountId)?.name || "Chọn tài khoản";
     };
 
     const getJarName = () => {
         if (!jarId) return "Không phân bổ vào hũ";
-        return MOCK_JARS.find(j => j.id === jarId)?.name || "Không phân bổ vào hũ";
+        return jarsList.find(j => j.id === jarId)?.name || "Không phân bổ vào hũ";
     };
 
     const getDateLabel = () => {
-        return dateOption === "today" ? "Hôm nay" : "Hôm qua";
+        if (dateOption === "today") return "Hôm nay";
+        if (dateOption === "yesterday") return "Hôm qua";
+
+        if (editingData) {
+            return editingData.transaction_date.toLocaleDateString("vi-VN");
+        }
+        return "Hôm nay";
     };
 
     return (
@@ -112,7 +252,9 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
                     <TouchableOpacity onPress={onClose} style={styles.closeButton} aria-label="Close transaction creator">
                         <Feather name="x" size={24} color={Theme.colors.textPrimary} />
                     </TouchableOpacity>
-                    <AppText variant="bold" size="lg">Thêm giao dịch</AppText>
+                    <AppText variant="bold" size="lg">
+                        {editingData ? "Chỉnh sửa" : "Thêm mới"}
+                    </AppText>
                     <View style={{ width: 40 }} />
                 </View>
 
@@ -121,7 +263,7 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
                         <AppText style={styles.amountLabel}>
                             {type === "expense" ? "Số tiền chi tiêu" : "Số tiền thu nhập"}
                         </AppText>
-                        
+
                         <View style={styles.amountInputRow}>
                             <TextInput
                                 style={styles.amountInput}
@@ -272,7 +414,7 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
 
                     <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                         <AppText variant="bold" color={Theme.colors.white}>
-                            Lưu giao dịch
+                            {editingData ? "Cập nhật" : "Lưu"}
                         </AppText>
                     </TouchableOpacity>
                 </ScrollView>
@@ -286,6 +428,39 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
                                     <AppText style={styles.bottomSheetCloseText}>Đóng</AppText>
                                 </TouchableOpacity>
                             </View>
+
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                                <TextInput
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: "#F1F5F9",
+                                        borderRadius: 12,
+                                        paddingHorizontal: 12,
+                                        height: 40,
+                                        fontSize: 14,
+                                        fontFamily: Theme.font.family.medium,
+                                        color: Theme.colors.textPrimary,
+                                    }}
+                                    value={newCategoryName}
+                                    onChangeText={setNewCategoryName}
+                                    placeholder="+ Tạo danh mục mới (Ví dụ: Học tập, nhà trọ...)"
+                                    placeholderTextColor={Theme.colors.textDisabled}
+                                />
+                                <TouchableOpacity
+                                    style={{
+                                        backgroundColor: "#7F26FD",
+                                        borderRadius: 12,
+                                        paddingHorizontal: 16,
+                                        height: 40,
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                    }}
+                                    onPress={handleCreateCategory}
+                                >
+                                    <AppText variant="bold" color={Theme.colors.white} size="sm">Thêm</AppText>
+                                </TouchableOpacity>
+                            </View>
+
                             <ScrollView style={styles.bottomSheetList} showsVerticalScrollIndicator={false}>
                                 {categories.map(c => (
                                     <TouchableOpacity
@@ -317,7 +492,7 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
                                 </TouchableOpacity>
                             </View>
                             <ScrollView style={styles.bottomSheetList} showsVerticalScrollIndicator={false}>
-                                {MOCK_ACCOUNTS.map(a => (
+                                {accountsList.map(a => (
                                     <TouchableOpacity
                                         key={a.id}
                                         style={styles.bottomSheetItem}
@@ -357,7 +532,7 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
                                     <AppText color={Theme.colors.textSecondary}>Không phân bổ vào hũ</AppText>
                                     {jarId === null && <Feather name="check" size={16} color="#7F26FD" />}
                                 </TouchableOpacity>
-                                {MOCK_JARS.map(j => (
+                                {jarsList.map(j => (
                                     <TouchableOpacity
                                         key={j.id}
                                         style={styles.bottomSheetItem}
@@ -421,7 +596,7 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
                                     <AppText style={styles.bottomSheetCloseText}>Đóng</AppText>
                                 </TouchableOpacity>
                             </View>
-                            
+
                             <TextInput
                                 style={styles.noteTextarea}
                                 value={note}
@@ -432,7 +607,7 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
                                 numberOfLines={4}
                                 autoFocus
                             />
-                            
+
                             <TouchableOpacity style={styles.noteSaveButton} onPress={() => setActivePicker(null)}>
                                 <AppText variant="bold" color={Theme.colors.white}>
                                     Lưu ghi chú
@@ -445,5 +620,3 @@ export default function AddTransactionScreen({ visible, onClose, onSave }: AddTr
         </Modal>
     );
 }
-
-

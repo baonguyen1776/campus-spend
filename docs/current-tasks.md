@@ -47,6 +47,7 @@ The project should not implement backend, login, cloud sync, or AI yet.
 - [x] Add income transaction.
 - [x] Add expense transaction.
 - [x] View transaction list.
+- [x] Create custom categories dynamically during transaction creation.
 - [ ] Edit transaction.
 - [ ] Delete transaction.
 - [x] View monthly total income.

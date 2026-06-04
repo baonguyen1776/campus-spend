@@ -67,6 +67,11 @@ export class TransactionService {
 
         await this._transactionRepository.save(transaction);
     }
+
+    public async deleteTransaction(id: string): Promise<void> {
+        // Gọi đến repositỏy để thực hiện xóa
+        await this._transactionRepository.delete(id);
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

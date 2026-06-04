@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Transaction } from "../../domain/entities/Transaction";
-import { MOCK_ACCOUNTS } from "../../constants/mockData";
 import { generateRecentMonths } from "../../utils/format";
 import { transactionService } from "../../services/TransactionService";
+import { SQLiteDatabaseManager } from "../../database/SQLiteDatabaseManager";
 
 const MONTHS = generateRecentMonths(4);
 
@@ -11,20 +11,95 @@ export function useHomeViewModel() {
     const [showMonthDropdown, setShowMonthDropdown] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+    // Dynamic local states loaded from SQLite
+    const [categories, setCategories] = useState<{ id: string; name: string; type: string }[]>([]);
+    const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
+    const [jars, setJars] = useState<{ id: string; name: string }[]>([]);
+
+    // Interactive Category Filter State
+    const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
+
+    const [showAllTransactions, setShowAllTransactions] = useState(false);
+
     const [loading, setLoading] = useState(true);
 
-    const loadTransactions = () => {
-        transactionService.getTransactions().then(data => {
-            setTransactions(data);
+    const dbManager = SQLiteDatabaseManager.getInstance();
+
+    // Query all data dynamically from SQLite
+    const loadAllData = async () => {
+        try {
+            const txs = await transactionService.getTransactions();
+            setTransactions(txs);
+
+            const db = await dbManager.getDatabase();
+
+            const cats = await db.getAllAsync<{ id: string; name: string; type: string }>(
+                "SELECT id, name, type FROM categories;"
+            );
+            setCategories(cats);
+
+            const accs = await db.getAllAsync<{ id: string; name: string }>(
+                "SELECT id, name FROM accounts;"
+            );
+            setAccounts(accs);
+
+            const jrs = await db.getAllAsync<{ id: string; name: string }>(
+                "SELECT id, name FROM jars;"
+            );
+            setJars(jrs);
+
             setLoading(false);
-        });
+        } catch (error) {
+            console.error("[useHomeViewModel] Error loading dynamic SQLite data:", error);
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
-        loadTransactions();
+        loadAllData();
     }, []);
 
-    // Điều phối hành động Lưu giao dịch
+    const loadTransactions = () => {
+        loadAllData();
+    };
+
+    // Dynamic Lookups
+    const getCategoryName = (categoryId: string | null) => {
+        if (!categoryId) return "Chưa phân loại";
+        return categories.find(c => c.id === categoryId)?.name ?? "Chưa phân loại";
+    };
+
+    const getAccountName = (accountId: string | null) => {
+        if (!accountId) return "Không rõ";
+        return accounts.find(a => a.id === accountId)?.name ?? "Không rõ";
+    };
+
+    const getJarName = (jarId: string | null) => {
+        if (!jarId) return null;
+        return jars.find(j => j.id === jarId)?.name ?? null;
+    };
+
+    const transactionOfSelectedMonth = useMemo(() => {
+        return transactions.filter(t => {
+            const date = t.transaction_date;
+            const month = `Tháng ${date.getMonth() + 1}, ${date.getFullYear()}`
+            return month === selectedMonth;
+        });
+    }, [transactions, selectedMonth]);
+
+    // Calculate sum of spent amount for each expense category
+    const categoryTotals = useMemo(() => {
+        const totals: Record<string, number> = {};
+        transactionOfSelectedMonth.forEach(t => {
+            if (t.type === "expense" && t.category_id) {
+                totals[t.category_id] = (totals[t.category_id] || 0) + t.amount;
+            }
+        });
+        return totals;
+    }, [transactionOfSelectedMonth]);
+
+    // Handle dynamic save
     const handleSaveTransaction = async (data: {
         name: string;
         amount: number;
@@ -36,7 +111,6 @@ export function useHomeViewModel() {
         transaction_date: Date;
     }) => {
         try {
-            // Khởi tạo đối tượng Domain Model Rich Entity (Encapsulated Invariant Rules)
             const newTx = new Transaction({
                 id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
                 name: data.name,
@@ -49,35 +123,37 @@ export function useHomeViewModel() {
                 transaction_date: data.transaction_date,
             });
 
-            // Thực hiện ghi nhận giao dịch thông qua tầng Service
             await transactionService.saveTransaction(newTx);
-
-            // Cập nhật lại danh sách trên Dashboard tức thì!
             loadTransactions();
         } catch (error: any) {
             console.error("Error saving transaction:", error.message);
         }
     };
 
+    // Apply interactive category filter to list
+    const filteredTransactions = useMemo(() => {
+        if (!selectedCategoryFilter) return transactionOfSelectedMonth;
+        return transactionOfSelectedMonth.filter(t => t.category_id === selectedCategoryFilter);
+    }, [transactionOfSelectedMonth, selectedCategoryFilter]);
+
     const recentTransactions = useMemo(() => {
-        // Lấy 4 giao dịch gần đây nhất để hiển thị ở trang chủ
-        return transactions.slice(0, 4);
-    }, [transactions]);
+        if (showAllTransactions) { return filteredTransactions; }
+        return filteredTransactions.slice(0, 4);
+    }, [filteredTransactions, showAllTransactions]);
 
     const incomeSum = useMemo(() => {
-        return transactions
+        return transactionOfSelectedMonth
             .filter(t => t.type === "income")
             .reduce((s, t) => s + t.amount, 0);
-    }, [transactions]);
+    }, [transactionOfSelectedMonth]);
 
     const expenseSum = useMemo(() => {
-        return transactions
+        return transactionOfSelectedMonth
             .filter(t => t.type === "expense")
             .reduce((s, t) => s + t.amount, 0);
-    }, [transactions]);
+    }, [transactionOfSelectedMonth]);
 
     const balance = useMemo(() => {
-        // Số dư hiện tại = Tổng thu nhập - Tổng chi tiêu (Theo nguyên tắc nghiệp vụ trong AGENTS.md)
         return incomeSum - expenseSum;
     }, [incomeSum, expenseSum]);
 
@@ -90,9 +166,14 @@ export function useHomeViewModel() {
         return transactionService.calculateGroupTotal(firstGroup);
     }, [groupedByDay]);
 
-    const getAccountName = (accountId: string | null) => {
-        const acc = MOCK_ACCOUNTS.find(a => a.id === accountId);
-        return acc?.name ?? "Không rõ";
+    // Handle delete transaction
+    const handleDeleteTransaction = async (id: string) => {
+        try {
+            await transactionService.deleteTransaction(id);
+            loadTransactions();
+        } catch (error: any) {
+            console.error("Error deleting transaction:", error.message);
+        }
     };
 
     return {
@@ -103,13 +184,23 @@ export function useHomeViewModel() {
         showAddModal,
         setShowAddModal,
         handleSaveTransaction,
+        handleDeleteTransaction,
         balance,
         incomeSum,
         expenseSum,
         groupedByDay,
         firstGroupTotal,
+        getCategoryName,
         getAccountName,
+        getJarName,
         MONTHS,
         loading,
+        // Category section lookups & states
+        categoriesList: categories,
+        selectedCategoryFilter,
+        setSelectedCategoryFilter,
+        categoryTotals,
+        showAllTransactions,
+        setShowAllTransactions,
     };
 }

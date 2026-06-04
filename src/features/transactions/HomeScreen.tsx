@@ -4,6 +4,7 @@ import {
     ScrollView,
     Image,
     TouchableOpacity,
+    Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -16,9 +17,14 @@ import { getCategoryConfig } from "../../constants/categoryConfig";
 
 import { useHomeViewModel } from "./useHomeViewModel";
 import styles from "./HomeScreen.styles";
+import { Transaction } from "../../domain/entities/Transaction";
+
+interface HomeScreenProps {
+    onEditTransaction: (tx: Transaction) => void;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
-export default function HomeScreen() {
+export default function HomeScreen({ onEditTransaction }: HomeScreenProps) {
     const {
         selectedMonth,
         setSelectedMonth,
@@ -29,9 +35,19 @@ export default function HomeScreen() {
         expenseSum,
         groupedByDay,
         firstGroupTotal,
+        getCategoryName,
         getAccountName,
+        getJarName,
         MONTHS,
-        loading
+        loading,
+        // Dynamic Categories lookup, totals, and filter states
+        categoriesList,
+        selectedCategoryFilter,
+        setSelectedCategoryFilter,
+        categoryTotals,
+        setShowAllTransactions,
+        showAllTransactions,
+        handleDeleteTransaction,
     } = useHomeViewModel();
 
     return (
@@ -171,6 +187,76 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                 </Card>
 
+                {/* ── Khung Danh mục Chi tiêu Độc lập (Phân loại chi tiêu) ── */}
+                <View style={styles.categoriesSection}>
+                    <View style={styles.categoriesHeader}>
+                        <AppText variant="bold" size="base" color={Theme.colors.textPrimary}>
+                            Phân loại chi tiêu
+                        </AppText>
+                        {selectedCategoryFilter && (
+                            <TouchableOpacity onPress={() => setSelectedCategoryFilter(null)}>
+                                <AppText size="xs" variant="bold" color="#7F26FD">
+                                    Tất cả
+                                </AppText>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.categoriesScroll}
+                    >
+                        {categoriesList.filter(c => c.type === "expense").map(cat => {
+                            const cfg = getCategoryConfig(cat.id);
+                            const spent = categoryTotals[cat.id] || 0;
+                            const isSelected = selectedCategoryFilter === cat.id;
+
+                            return (
+                                <TouchableOpacity
+                                    key={cat.id}
+                                    style={[
+                                        styles.categoryChip,
+                                        isSelected && styles.categoryChipSelected
+                                    ]}
+                                    activeOpacity={0.7}
+                                    onPress={() => {
+                                        if (isSelected) {
+                                            setSelectedCategoryFilter(null);
+                                        } else {
+                                            setSelectedCategoryFilter(cat.id);
+                                        }
+                                    }}
+                                >
+                                    <View style={[
+                                        styles.categoryIconCircle,
+                                        { backgroundColor: cfg.bg, borderColor: cfg.border }
+                                    ]}>
+                                        <Feather name={cfg.icon as any} size={18} color={cfg.color} />
+                                    </View>
+                                    <AppText
+                                        size="xs"
+                                        variant="semiBold"
+                                        color={Theme.colors.textPrimary}
+                                        numberOfLines={1}
+                                        style={styles.categoryName}
+                                    >
+                                        {cat.name}
+                                    </AppText>
+                                    <AppText
+                                        size="xs"
+                                        color={Theme.colors.textSecondary}
+                                        variant="mono"
+                                        style={styles.categorySpent}
+                                    >
+                                        {formatVND(spent)}
+                                    </AppText>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
+                </View>
+
                 {/* ── Phần Giao dịch ── */}
                 <View style={styles.transactionsSection}>
                     {/* Header hàng: "Giao dịch" + Filter + Clock + "Trong kỳ" */}
@@ -185,9 +271,12 @@ export default function HomeScreen() {
                             <TouchableOpacity style={styles.iconButton}>
                                 <Feather name="clock" size={16} color={Theme.colors.textSecondary} />
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.periodButton}>
+                            <TouchableOpacity style={styles.periodButton}
+                                onPress={() => setShowAllTransactions(!showAllTransactions)}
+                                activeOpacity={0.7}
+                            >
                                 <AppText size="xs" variant="bold" color={Theme.colors.primary}>
-                                    Trong kỳ
+                                    {showAllTransactions ? "Tất cả" : "Trong kỳ"}
                                 </AppText>
                             </TouchableOpacity>
                         </View>
@@ -215,11 +304,48 @@ export default function HomeScreen() {
                                         {txs.map(tx => {
                                             const isExpense = tx.type === 'expense';
                                             const cfg = getCategoryConfig(tx.category_id);
+
                                             return (
                                                 <TouchableOpacity
                                                     key={tx.id}
                                                     style={styles.txItem}
                                                     activeOpacity={0.7}
+                                                    onPress={() => {
+                                                        Alert.alert(
+                                                            "Chi tiết giao dịch",
+                                                            `• Tên: ${tx.name}\n• Số tiền: ${tx.amount.toLocaleString('vi-VN')} ₫\n• Loại: ${isExpense ? 'Chi tiêu' : 'Thu nhập'}\n• Ghi chú: ${tx.note || 'Không có'}`,
+                                                            [
+                                                                {
+                                                                    text: "Đóng",
+                                                                    style: "cancel"
+                                                                },
+
+                                                                {
+                                                                    text: "Sửa",
+                                                                    onPress: () => onEditTransaction(tx)
+                                                                },
+
+                                                                {
+                                                                    text: "Xóa",
+                                                                    style: "destructive",
+                                                                    onPress: () => {
+                                                                        Alert.alert(
+                                                                            "Xác nhận xóa",
+                                                                            `Bạn có chắc xóa giao dịch "${tx.name}"`,
+                                                                            [
+                                                                                { text: "Hủy", style: "cancel" },
+                                                                                {
+                                                                                    text: "Xóa",
+                                                                                    style: "destructive",
+                                                                                    onPress: () => handleDeleteTransaction(tx.id)
+                                                                                }
+                                                                            ]
+                                                                        );
+                                                                    }
+                                                                }
+                                                            ]
+                                                        );
+                                                    }}
                                                 >
                                                     {/* Icon danh mục */}
                                                     <View style={[
@@ -229,8 +355,8 @@ export default function HomeScreen() {
                                                         <Feather name={cfg.icon as any} size={18} color={cfg.color} />
                                                     </View>
 
-                                                    {/* Tên + tài khoản */}
-                                                    <View style={styles.txMeta}>
+                                                    {/* Tên + tài khoản*/}
+                                                    <View>
                                                         <AppText variant="semiBold" size="sm" color={Theme.colors.textPrimary}>
                                                             {tx.name}
                                                         </AppText>
@@ -247,14 +373,10 @@ export default function HomeScreen() {
                                                         </View>
                                                     </View>
 
-                                                    {/* Số tiền + giờ */}
+                                                    {/* số tiền + giờ*/}
                                                     <View style={styles.txAmountCol}>
-                                                        <AppText
-                                                            variant="mono"
-                                                            size="xs"
-                                                            color={isExpense ? Theme.colors.textPrimary : Theme.colors.income}
-                                                        >
-                                                            {isExpense ? '-' : '+'}{tx.amount.toLocaleString('vi-VN')} ₫
+                                                        <AppText variant="semiBold" color={isExpense ? Theme.colors.danger : Theme.colors.primary}>
+                                                            {isExpense ? '-' : '+'} {tx.amount.toLocaleString('vi-VN')} ₫
                                                         </AppText>
                                                         <AppText
                                                             variant="mono"
@@ -266,8 +388,9 @@ export default function HomeScreen() {
                                                         </AppText>
                                                     </View>
                                                 </TouchableOpacity>
-                                            );
+                                            )
                                         })}
+
                                     </View>
                                 </View>
                             ))}

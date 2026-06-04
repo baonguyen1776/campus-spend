@@ -265,6 +265,56 @@ const styles = StyleSheet.create({
         borderColor: Theme.colors.border,
         marginTop: Theme.spacing.sm,
     },
+
+    // ── Dedicated Categories Horizontal Section Widget ────────────────────────
+    categoriesSection: {
+        marginBottom: Theme.spacing.xl,
+    },
+    categoriesHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: Theme.spacing.xxs,
+        marginBottom: Theme.spacing.md,
+    },
+    categoriesScroll: {
+        paddingRight: Theme.spacing.base,
+    },
+    categoryChip: {
+        width: 92,
+        paddingVertical: Theme.spacing.sm + 2,
+        paddingHorizontal: Theme.spacing.xs,
+        backgroundColor: Theme.colors.bgSurface,
+        borderWidth: 1.5,
+        borderColor: "#E2E8F0",
+        borderRadius: 16,
+        alignItems: "center",
+        marginRight: 10,
+    },
+    categoryChipSelected: {
+        borderColor: "#7F26FD",
+        backgroundColor: "#F9F5FF",
+    },
+    categoryIconCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        alignItems: "center",
+        justifyContent: "center",
+        borderWidth: 1,
+    },
+    categoryName: {
+        fontSize: 11,
+        fontFamily: Theme.font.family.bold,
+        marginTop: Theme.spacing.sm,
+        textAlign: "center",
+        width: "100%",
+    },
+    categorySpent: {
+        fontSize: 9,
+        marginTop: 2,
+        textAlign: "center",
+    },
 });
 
 export default styles;
