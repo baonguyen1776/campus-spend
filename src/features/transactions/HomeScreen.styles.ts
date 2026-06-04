@@ -192,11 +192,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: Theme.spacing.sm,
     },
-    iconButton: {
-        padding: Theme.spacing.sm,
-        borderRadius: 10,
-        backgroundColor: Theme.colors.bgSurface,
-    },
     periodButton: {
         paddingHorizontal: Theme.spacing.md,
         paddingVertical: Theme.spacing.sm - 2, // 6px

@@ -53,8 +53,9 @@ The project should not implement backend, login, cloud sync, or AI yet.
 - [x] View monthly total income.
 - [x] View monthly total expense.
 - [x] View monthly balance.
-- [ ] Filter transactions by month.
-- [ ] Filter transactions by category.
+- [x] Filter transactions by month.
+- [x] Filter transactions by category.
+
 
 ---
 

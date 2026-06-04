@@ -34,7 +34,6 @@ export default function HomeScreen({ onEditTransaction }: HomeScreenProps) {
         incomeSum,
         expenseSum,
         groupedByDay,
-        firstGroupTotal,
         getCategoryName,
         getAccountName,
         getJarName,
@@ -265,12 +264,6 @@ export default function HomeScreen({ onEditTransaction }: HomeScreenProps) {
                             Giao dịch
                         </AppText>
                         <View style={styles.sectionHeaderActions}>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <Feather name="filter" size={16} color={Theme.colors.textSecondary} />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.iconButton}>
-                                <Feather name="clock" size={16} color={Theme.colors.textSecondary} />
-                            </TouchableOpacity>
                             <TouchableOpacity style={styles.periodButton}
                                 onPress={() => setShowAllTransactions(!showAllTransactions)}
                                 activeOpacity={0.7}
@@ -285,115 +278,118 @@ export default function HomeScreen({ onEditTransaction }: HomeScreenProps) {
                     {/* Nhóm ngày + Tổng */}
                     {groupedByDay.size > 0 && (
                         <>
-                            {[...groupedByDay.entries()].map(([dateLabel, txs]) => (
-                                <View key={dateLabel}>
-                                    <View style={styles.dateGroupHeader}>
-                                        <AppText size="xs" variant="bold" color={Theme.colors.textSecondary}>
-                                            {dateLabel}
-                                        </AppText>
-                                        <AppText size="xs" color={Theme.colors.textSecondary}>
-                                            {'Tổng '}
-                                            <AppText size="xs" variant="bold" color={Theme.colors.textPrimary}>
-                                                {formatVND(Math.abs(firstGroupTotal))}
+                            {[...groupedByDay.entries()].map(([dateLabel, txs]) => {
+                                const groupTotal = txs.reduce(
+                                    (sum, tx) => sum + (tx.type === "income" ? tx.amount : -tx.amount),
+                                    0
+                                );
+                                return (
+                                    <View key={dateLabel}>
+                                        <View style={styles.dateGroupHeader}>
+                                            <AppText size="xs" variant="bold" color={Theme.colors.textSecondary}>
+                                                {dateLabel}
                                             </AppText>
-                                        </AppText>
-                                    </View>
+                                            <AppText size="xs" color={Theme.colors.textSecondary}>
+                                                {'Tổng '}
+                                                <AppText size="xs" variant="bold" color={Theme.colors.textPrimary}>
+                                                    {formatVND(Math.abs(groupTotal))}
+                                                </AppText>
+                                            </AppText>
+                                        </View>
 
-                                    {/* Danh sách từng giao dịch trong nhóm */}
-                                    <View style={styles.txList}>
-                                        {txs.map(tx => {
-                                            const isExpense = tx.type === 'expense';
-                                            const cfg = getCategoryConfig(tx.category_id);
+                                        {/* Danh sách từng giao dịch trong nhóm */}
+                                        <View style={styles.txList}>
+                                            {txs.map(tx => {
+                                                const isExpense = tx.type === 'expense';
+                                                const cfg = getCategoryConfig(tx.category_id);
 
-                                            return (
-                                                <TouchableOpacity
-                                                    key={tx.id}
-                                                    style={styles.txItem}
-                                                    activeOpacity={0.7}
-                                                    onPress={() => {
-                                                        Alert.alert(
-                                                            "Chi tiết giao dịch",
-                                                            `• Tên: ${tx.name}\n• Số tiền: ${tx.amount.toLocaleString('vi-VN')} ₫\n• Loại: ${isExpense ? 'Chi tiêu' : 'Thu nhập'}\n• Ghi chú: ${tx.note || 'Không có'}`,
-                                                            [
-                                                                {
-                                                                    text: "Đóng",
-                                                                    style: "cancel"
-                                                                },
-
-                                                                {
-                                                                    text: "Sửa",
-                                                                    onPress: () => onEditTransaction(tx)
-                                                                },
-
-                                                                {
-                                                                    text: "Xóa",
-                                                                    style: "destructive",
-                                                                    onPress: () => {
-                                                                        Alert.alert(
-                                                                            "Xác nhận xóa",
-                                                                            `Bạn có chắc xóa giao dịch "${tx.name}"`,
-                                                                            [
-                                                                                { text: "Hủy", style: "cancel" },
-                                                                                {
-                                                                                    text: "Xóa",
-                                                                                    style: "destructive",
-                                                                                    onPress: () => handleDeleteTransaction(tx.id)
-                                                                                }
-                                                                            ]
-                                                                        );
+                                                return (
+                                                    <TouchableOpacity
+                                                        key={tx.id}
+                                                        style={styles.txItem}
+                                                        activeOpacity={0.7}
+                                                        onPress={() => {
+                                                            Alert.alert(
+                                                                "Chi tiết giao dịch",
+                                                                `• Tên: ${tx.name}\n• Số tiền: ${tx.amount.toLocaleString('vi-VN')} ₫\n• Loại: ${isExpense ? 'Chi tiêu' : 'Thu nhập'}\n• Ghi chú: ${tx.note || 'Không có'}`,
+                                                                [
+                                                                    {
+                                                                        text: "Đóng",
+                                                                        style: "cancel"
+                                                                    },
+                                                                    {
+                                                                        text: "Sửa",
+                                                                        onPress: () => onEditTransaction(tx)
+                                                                    },
+                                                                    {
+                                                                        text: "Xóa",
+                                                                        style: "destructive",
+                                                                        onPress: () => {
+                                                                            Alert.alert(
+                                                                                "Xác nhận xóa",
+                                                                                `Bạn có chắc xóa giao dịch "${tx.name}"`,
+                                                                                [
+                                                                                    { text: "Hủy", style: "cancel" },
+                                                                                    {
+                                                                                        text: "Xóa",
+                                                                                        style: "destructive",
+                                                                                        onPress: () => handleDeleteTransaction(tx.id)
+                                                                                    }
+                                                                                ]
+                                                                            );
+                                                                        }
                                                                     }
-                                                                }
-                                                            ]
-                                                        );
-                                                    }}
-                                                >
-                                                    {/* Icon danh mục */}
-                                                    <View style={[
-                                                        styles.txIconBox,
-                                                        { backgroundColor: cfg.bg, borderColor: cfg.border }
-                                                    ]}>
-                                                        <Feather name={cfg.icon as any} size={18} color={cfg.color} />
-                                                    </View>
-
-                                                    {/* Tên + tài khoản*/}
-                                                    <View>
-                                                        <AppText variant="semiBold" size="sm" color={Theme.colors.textPrimary}>
-                                                            {tx.name}
-                                                        </AppText>
-                                                        <View style={styles.txSubRow}>
-                                                            <View style={[styles.txDot, { backgroundColor: isExpense ? Theme.colors.danger : Theme.colors.primary }]} />
-                                                            <AppText size="xs" color={Theme.colors.textSecondary} variant="medium">
-                                                                {getAccountName(tx.account_id)}
-                                                            </AppText>
-                                                            {tx.note ? (
-                                                                <AppText size="xs" color={Theme.colors.textSecondary}>
-                                                                    {' • '}{tx.note}
-                                                                </AppText>
-                                                            ) : null}
+                                                                ]
+                                                            );
+                                                        }}
+                                                    >
+                                                        {/* Icon danh mục */}
+                                                        <View style={[
+                                                            styles.txIconBox,
+                                                            { backgroundColor: cfg.bg, borderColor: cfg.border }
+                                                        ]}>
+                                                            <Feather name={cfg.icon as any} size={18} color={cfg.color} />
                                                         </View>
-                                                    </View>
 
-                                                    {/* số tiền + giờ*/}
-                                                    <View style={styles.txAmountCol}>
-                                                        <AppText variant="semiBold" color={isExpense ? Theme.colors.danger : Theme.colors.primary}>
-                                                            {isExpense ? '-' : '+'} {tx.amount.toLocaleString('vi-VN')} ₫
-                                                        </AppText>
-                                                        <AppText
-                                                            variant="mono"
-                                                            size="xs"
-                                                            color={Theme.colors.textSecondary}
-                                                            style={{ marginTop: 4 }}
-                                                        >
-                                                            {formatTime(tx.transaction_date)}
-                                                        </AppText>
-                                                    </View>
-                                                </TouchableOpacity>
-                                            )
-                                        })}
+                                                        {/* Tên + tài khoản*/}
+                                                        <View style={styles.txMeta}>
+                                                            <AppText variant="semiBold" size="sm" color={Theme.colors.textPrimary} numberOfLines={1}>
+                                                                {tx.name}
+                                                            </AppText>
+                                                            <View style={styles.txSubRow}>
+                                                                <View style={[styles.txDot, { backgroundColor: isExpense ? Theme.colors.danger : Theme.colors.primary }]} />
+                                                                <AppText size="xs" color={Theme.colors.textSecondary} variant="medium">
+                                                                    {getAccountName(tx.account_id)}
+                                                                </AppText>
+                                                                {tx.note ? (
+                                                                    <AppText size="xs" color={Theme.colors.textSecondary} numberOfLines={1} style={{ flex: 1 }}>
+                                                                        {' • '}{tx.note}
+                                                                    </AppText>
+                                                                ) : null}
+                                                            </View>
+                                                        </View>
 
+                                                        {/* số tiền + giờ*/}
+                                                        <View style={styles.txAmountCol}>
+                                                            <AppText variant="semiBold" color={isExpense ? Theme.colors.danger : Theme.colors.primary}>
+                                                                {isExpense ? '-' : '+'} {tx.amount.toLocaleString('vi-VN')} ₫
+                                                            </AppText>
+                                                            <AppText
+                                                                variant="mono"
+                                                                size="xs"
+                                                                color={Theme.colors.textSecondary}
+                                                                style={{ marginTop: 4 }}
+                                                            >
+                                                                {formatTime(tx.transaction_date)}
+                                                            </AppText>
+                                                        </View>
+                                                    </TouchableOpacity>
+                                                );
+                                            })}
+                                        </View>
                                     </View>
-                                </View>
-                            ))}
+                                );
+                            })}
                         </>
                     )}
 
