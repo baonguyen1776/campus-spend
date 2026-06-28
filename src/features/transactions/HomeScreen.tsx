@@ -87,32 +87,7 @@ export default function HomeScreen({ onEditTransaction }: HomeScreenProps) {
                     </TouchableOpacity>
                 </View>
 
-                {/* Dropdown tháng (hiển thị khi bấm Month Selector) */}
-                {showMonthDropdown && (
-                    <View style={styles.monthDropdown}>
-                        {MONTHS.map(m => (
-                            <TouchableOpacity
-                                key={m}
-                                style={[
-                                    styles.monthDropdownItem,
-                                    m === selectedMonth && styles.monthDropdownItemActive,
-                                ]}
-                                onPress={() => {
-                                    setSelectedMonth(m);
-                                    setShowMonthDropdown(false);
-                                }}
-                            >
-                                <AppText
-                                    size="xs"
-                                    variant="medium"
-                                    color={m === selectedMonth ? Theme.colors.primary : '#334155'}
-                                >
-                                    {m}
-                                </AppText>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                )}
+
 
                 {/* Số dư hiện tại — căn giữa to bự */}
                 <View style={styles.balanceSection}>
@@ -411,6 +386,33 @@ export default function HomeScreen({ onEditTransaction }: HomeScreenProps) {
                     )}
                 </View>
             </View>
+
+            {/* Dropdown tháng (hiển thị khi bấm Month Selector) */}
+            {showMonthDropdown && (
+                <View style={styles.monthDropdown}>
+                    {MONTHS.map(m => (
+                        <TouchableOpacity
+                            key={m}
+                            style={[
+                                styles.monthDropdownItem,
+                                m === selectedMonth && styles.monthDropdownItemActive,
+                            ]}
+                            onPress={() => {
+                                setSelectedMonth(m);
+                                setShowMonthDropdown(false);
+                            }}
+                        >
+                            <AppText
+                                size="xs"
+                                variant="medium"
+                                color={m === selectedMonth ? Theme.colors.primary : '#334155'}
+                            >
+                                {m}
+                            </AppText>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            )}
         </ScrollView>
     );
 }

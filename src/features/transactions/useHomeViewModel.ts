@@ -3,6 +3,8 @@ import { Transaction } from "../../domain/entities/Transaction";
 import { generateRecentMonths } from "../../utils/format";
 import { transactionService } from "../../services/TransactionService";
 import { SQLiteDatabaseManager } from "../../database/SQLiteDatabaseManager";
+import { financialOrchestrator } from "../../services/FinancialOrchestrator";
+import { Alert } from "react-native";
 
 const MONTHS = generateRecentMonths(4);
 
@@ -123,10 +125,11 @@ export function useHomeViewModel() {
                 transaction_date: data.transaction_date,
             });
 
-            await transactionService.saveTransaction(newTx);
+            await financialOrchestrator.saveTransaction(newTx);
             loadTransactions();
         } catch (error: any) {
             console.error("Error saving transaction:", error.message);
+            Alert.alert("Cannot save", error.message);
         }
     };
 
@@ -169,7 +172,7 @@ export function useHomeViewModel() {
     // Handle delete transaction
     const handleDeleteTransaction = async (id: string) => {
         try {
-            await transactionService.deleteTransaction(id);
+            await financialOrchestrator.deleteTransaction(id);
             loadTransactions();
         } catch (error: any) {
             console.error("Error deleting transaction:", error.message);

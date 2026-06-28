@@ -42,7 +42,7 @@ The project should not implement backend, login, cloud sync, or AI yet.
 
 ---
 
-## MVP Phase 1 Checklist
+## MVP Phase 1 Checklist ✅ 100% Complete
 
 - [x] Add income transaction.
 - [x] Add expense transaction.
@@ -56,22 +56,32 @@ The project should not implement backend, login, cloud sync, or AI yet.
 - [x] Filter transactions by month.
 - [x] Filter transactions by category.
 
+---
+
+## MVP Phase 2 Checklist (~95% Complete)
+
+- [x] Create monthly spending jars. (JarScreen + JarFormModal + JarService.saveJar)
+- [x] Edit and delete jars. (JarService.updateJarLimit, JarService.deleteJar — validates new limit >= spent)
+- [x] Assign expense transaction to a jar. (UI in AddTransactionScreen + FinancialOrchestrator.saveTransaction)
+- [x] Deduct jar amount when expense is saved. (JarService.deductAmount via FinancialOrchestrator)
+- [x] Refund jar amount when expense is deleted or edited. (JarService.refundAmount via FinancialOrchestrator)
+- [x] Warn when overspending a jar. (Alert.alert shown from useHomeViewModel catch block)
+- [x] Show remaining amount of each jar. (JarScreen card shows current_amount and progress bar)
+- [x] Show jar dashboard. (JarScreen with totalAllocated / totalRemaining summary)
+- [x] **BUG FIX:** Filter jar list in AddTransactionScreen by current selected month.
+  - Fixed: `SELECT id, name, current_amount FROM jars WHERE month = ?` using `new Date().toISOString().slice(0, 7)`.
 
 ---
 
-## MVP Phase 2 Checklist
-
-- [ ] Create monthly spending jars.
-- [ ] Assign expense to a jar.
-- [ ] Show remaining amount of each jar.
-- [ ] Warn when overspending a jar.
-- [ ] Show jar dashboard.
-
----
-
-## MVP Phase 3 Checklist
+## MVP Phase 3 Checklist (Not Started)
 
 - [ ] Mark one jar as saving/reserve.
-- [ ] Suggest covering overspending from saving/reserve jar.
-- [ ] Require user confirmation.
-- [ ] Record jar transfer.
+  - `is_saving_jar` toggle already exists in JarFormModal UI ✅
+  - Need: logic to identify and prioritize reserve jars in Orchestrator.
+- [ ] Detect overspending and suggest covering from saving/reserve jar.
+  - In `FinancialOrchestrator.saveTransaction`: if deductAmount fails (overspent), check if a reserve jar exists and prompt user.
+- [ ] Require user confirmation before transferring between jars.
+  - Show Alert with confirm/cancel before executing transfer.
+- [ ] Execute jar-to-jar transfer and update both jar balances.
+- [ ] Record jar transfer history.
+  - Needs: `jar_transfers` table in SQLite DB + `JarTransfer` domain entity + `SQLiteJarTransferRepository`.

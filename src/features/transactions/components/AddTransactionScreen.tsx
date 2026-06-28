@@ -70,8 +70,10 @@ export default function AddTransactionScreen({
             );
             setAccountsList(accs);
 
+            const currentMonth = new Date().toISOString().slice(0, 7);
             const jrs = await db.getAllAsync<{ id: string; name: string; current_amount: number }>(
-                "SELECT * FROM jars;"
+                "SELECT id, name, current_amount FROM jars where month = ?;",
+                [currentMonth]
             );
             setJarsList(jrs);
 

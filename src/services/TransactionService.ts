@@ -13,6 +13,14 @@ export class TransactionService {
         return this._transactionRepository.getAll();
     }
 
+    public async getTransactionById(id: string): Promise<Transaction | null> {
+        const transaction = await this._transactionRepository.getById(id);
+        if (!transaction) {
+            return null;
+        }
+        return transaction;
+    }
+
     public async calculateTotalIncome(transactions: Transaction[]): Promise<number> {
         return transactions
             .filter(t => t.type === "income")

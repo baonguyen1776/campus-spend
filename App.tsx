@@ -13,7 +13,7 @@ import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { JetBrainsMono_400Regular } from '@expo-google-fonts/jetbrains-mono';
 
 import HomeScreen from './src/features/transactions/HomeScreen';
-import PlanScreen from './src/features/jars/PlanScreen';
+import JarScreen from './src/features/jars/JarScreen';
 import ReportScreen from './src/features/reports/ReportScreen';
 import SettingsScreen from './src/features/accounts/SettingsScreen';
 
@@ -24,7 +24,7 @@ import AddTransactionScreen from './src/features/transactions/components/AddTran
 import { Transaction } from './src/domain/entities/Transaction';
 import { transactionService } from './src/services/TransactionService';
 
-type TabType = 'home' | 'plan' | 'report' | 'settings';
+type TabType = 'home' | 'jar' | 'report' | 'settings';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<TabType>('home');
@@ -103,7 +103,7 @@ export default function App() {
         setShowAddTransaction(true);
       }}
     />,
-    plan: <PlanScreen />,
+    jar: <JarScreen />,
     report: <ReportScreen />,
     settings: <SettingsScreen />,
   };
@@ -158,7 +158,7 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
-        {renderTabButton('plan', 'credit-card', 'Hũ chi tiêu')}
+        {renderTabButton('jar', 'credit-card', 'Hũ chi tiêu')}
         {renderTabButton('settings', 'settings', 'Cài đặt')}
       </View>
 
